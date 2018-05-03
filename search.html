@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>search</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script
+        src="https://code.jquery.com/jquery-3.3.1.min.js"
+        integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+        crossorigin="anonymous">
+    </script>
+</head>
+<body>
+    <p>
+        <input type="text" id="query" name="query" />
+        <input type="submit" id="search" value="查詢" />
+    </p>
+
+        <div id="demo"></div>
+
+        <div id="demo2"></div>
+
+    <script>
+            var content = [];
+
+            $("#search").click(function(){
+                if($("#query").val() !=""){
+                    var URLs="query.php";
+
+                    $.ajax({
+                        url:            URLs,
+                        contentType:    "application/json",
+                        type:           "GET",
+                        data:{
+                                        q:$("#query").val()
+                        },
+                        dataType:       'text',
+        
+                        success:function(data){
+
+                            //var res = data.match(/來源\([0-9]+\):.*]/g);
+                            var res = data.match(/<pre>[\s\S]*<\/pre>/);
+
+                            if ( res!=null){ // 如果有資料
+                                
+                                $('#demo').html( // 建立select標籤
+                                    $('<select/>')
+                                    .attr('id',"sel")
+                                    .addClass('list')
+                                    .html(
+                                        $('<option/>').append("請選擇").val(0)
+                                    )
+                                );
+
+                                var sArray = res[0].split(/(<span class=source>|<\/pre>)/);// 去掉頭尾，以<span>去切割
+                                var result;
+
+                                for( var i=2; i<sArray.length-1;i+=2){ // sArray 第三個元素開始才是我們要的，之後間隔兩個
+
+                                    result = sArray[i].split(/(來源\([0-9]+\):|<\/span>)/); // sArray 分出'來源'裡的內容
+
+                                    $('#sel').append(
+                                        $('<option/>').append(result[2]).val(i/2) // 加到select裡的選項
+                                    );
+
+                                    result = sArray[i].split("<br>"); // sArray 以<br>做切割，第二個元素才是我們要的內容
+                                    content.push(result[1]); // 之後onChang時的Select的值對應到content的索引
+                                }
+                                // console.log(content);
+                            }
+                            else{ // 沒有資料
+                                $('#demo').html("找不到相關資料");
+                            }
+                        },
+
+                        error:function(){
+                            alert("Error");
+                        }
+                    });
+                }
+                else{
+                    alert("未輸入資料");
+                }
+
+            });
+
+            $(function(){
+                $("#demo").on("change","#sel",function(){
+                    // console.log($("#sel").val());
+                   
+                    var index = $("#sel").val()-1;
+                    var string = content[index].replace(/\r\n/g,"<br>");
+                    string = content[index].replace(/\r\n/g,"<br>");
+                    string = string.replace(/\n/g,"<br>");
+
+                    $('#demo2').html( // 建立table標籤
+                        $('<table/>')
+                        .attr('id',"tab")
+                        .addClass('table')
+                        .html(
+                            $('<tr/>')
+                            .html(
+                                $('<td/>').append(string)
+                            )
+                        )
+                    );
+                    console.log(content[index]);                  
+                });
+            });
+    </script>
+
+</body>
+</html>
